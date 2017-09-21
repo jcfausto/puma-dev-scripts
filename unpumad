@@ -1,0 +1,1 @@
+rm ~/.puma-dev/"$(basename `pwd`)"
