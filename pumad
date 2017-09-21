@@ -1,8 +1,28 @@
 #!/bin/bash
+set -e
+
+if [ "$EUID" -ne 0 ]
+  then echo "This script requires sudo privileges. Please, run: sudo pumad"
+  exit
+fi
+
 if [ ! -f Gemfile ]; then
   echo "Are you sure you're in a Ruby on Rails app?"
 else
-  ln -s "$(pwd)" ~/.puma-dev/"$(basename `pwd`)"
-  puma-dev -install
-  echo "Your app should be available at http://$(basename `pwd`).dev and https://$(basename `pwd`).dev now!"
+  if [ ! -L ~/.puma-dev/"$(basename `pwd`)" ]; then
+    ln -s "$(pwd)" ~/.puma-dev/"$(basename `pwd`)"
+    if [[ "$OSTYPE" != 'linux-gnu' ]]; then
+       puma-dev -install
+    fi
+  fi
+
+  if [[ "$OSTYPE" == 'linux-gnu' ]]; then
+    echo "INFO: Your app should be available at http://$(basename `pwd`).localhost and https://$(basename `pwd`).localhost now!"
+    echo "INFO: DEV_TLD managed domains: `cat /etc/environment | grep DEV_TLD_DOMAINS` "
+  else
+    echo "INFO: Your app should be available at http://$(basename `pwd`).dev and https://$(basename `pwd`).dev now!"
+  fi
+
+  puma-dev -d localhost -sysbind
+
 fi
